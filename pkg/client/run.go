@@ -20,13 +20,9 @@ import (
 	"log"
 
 	"github.com/bitnami-labs/kubewatch/config"
+	"github.com/bitnami-labs/kubewatch/pkg/controller"
 	"github.com/bitnami-labs/kubewatch/pkg/handlers"
 	"github.com/bitnami-labs/kubewatch/pkg/handlers/slack"
-	"github.com/bitnami-labs/kubewatch/pkg/controller"
-	"github.com/bitnami-labs/kubewatch/pkg/handlers/hipchat"
-	"github.com/bitnami-labs/kubewatch/pkg/handlers/mattermost"
-	"github.com/bitnami-labs/kubewatch/pkg/handlers/flock"
-	"github.com/bitnami-labs/kubewatch/pkg/handlers/webhook"
 )
 
 // Run runs the event loop processing with given handler
@@ -35,14 +31,6 @@ func Run(conf *config.Config) {
 	switch {
 	case len(conf.Handler.Slack.Channel) > 0 || len(conf.Handler.Slack.Token) > 0:
 		eventHandler = new(slack.Slack)
-	case len(conf.Handler.Hipchat.Room) > 0 || len(conf.Handler.Hipchat.Token) > 0:
-		eventHandler = new(hipchat.Hipchat)
-	case len(conf.Handler.Mattermost.Channel) > 0 || len(conf.Handler.Mattermost.Url) > 0:
-		eventHandler = new(mattermost.Mattermost)
-	case len(conf.Handler.Flock.Url) > 0:
-		eventHandler = new(flock.Flock)
-	case len(conf.Handler.Webhook.Url) > 0:
-		eventHandler = new(webhook.Webhook)
 	default:
 		eventHandler = new(handlers.Default)
 	}

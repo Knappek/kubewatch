@@ -7,8 +7,8 @@ data:
     namespace: ""
     handler:
       slack:
-        token: <token>
-        channel: <channel>
+        token: xoxb-YOUR_TOKEN
+        channel: kubewatch
     resource:
       deployment: false
       replicationcontroller: false

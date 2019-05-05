@@ -37,15 +37,11 @@ var RootCmd = &cobra.Command{
 Kubewath: A watcher for Kubernetes
 
 kubewatch is a Kubernetes watcher that could publishes notification 
-to Slack/hipchat/mattermost/flock channels. It watches the culster 
+to Slack channels. It watches the culster 
 for resource changes and notifies them through webhooks.
 
 supported webhooks:
  - slack
- - hipchat
- - mattermost
- - flock
- - webhook
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {

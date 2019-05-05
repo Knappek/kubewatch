@@ -28,11 +28,7 @@ import (
 var ConfigFileName = ".kubewatch.yaml"
 
 type Handler struct {
-	Slack      Slack      `json:"slack"`
-	Hipchat    Hipchat    `json:"hipchat"`
-	Mattermost Mattermost `json:"mattermost"`
-	Flock      Flock      `json:"flock"`
-	Webhook    Webhook    `json:"webhook"`
+	Slack Slack `json:"slack"`
 }
 
 // Resource contains resource configuration
@@ -65,30 +61,6 @@ type Config struct {
 type Slack struct {
 	Token   string `json:"token"`
 	Channel string `json:"channel"`
-}
-
-// Hipchat contains hipchat configuration
-type Hipchat struct {
-	Token string `json:"token"`
-	Room  string `json:"room"`
-	Url   string `json:"url"`
-}
-
-// Mattermost contains mattermost configuration
-type Mattermost struct {
-	Channel  string `json:"room"`
-	Url      string `json:"url"`
-	Username string `json:"username"`
-}
-
-// Flock contains flock configuration
-type Flock struct {
-	Url string `json:"url"`
-}
-
-// Webhook contains webhook configuration
-type Webhook struct {
-	Url string `json:"url"`
 }
 
 // New creates new config object
@@ -212,18 +184,13 @@ func getConfigFile() string {
 }
 
 func configDir() string {
-    if configDir := os.Getenv("KW_CONFIG"); configDir != "" {
-        return configDir
-    }
+	if configDir := os.Getenv("KW_CONFIG"); configDir != "" {
+		return configDir
+	}
 
-    if runtime.GOOS == "windows" {
-        home := os.Getenv("USERPROFILE")
-        return home
-    }
-    return os.Getenv("HOME")
-	//path := "/etc/kubewatch"
-	//if _, err := os.Stat(path); os.IsNotExist(err) {
-	//	os.Mkdir(path, 755)
-	//}
-	//return path
+	if runtime.GOOS == "windows" {
+		home := os.Getenv("USERPROFILE")
+		return home
+	}
+	return os.Getenv("HOME")
 }

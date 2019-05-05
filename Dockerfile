@@ -1,5 +1,5 @@
 FROM golang:alpine AS builder
-MAINTAINER "Cuong Manh Le <cuong.manhle.vn@gmail.com>"
+MAINTAINER "Andy Knapp  (andy.knapp.ak@gmail.com)"
 
 RUN apk update && \
     apk add git build-base && \

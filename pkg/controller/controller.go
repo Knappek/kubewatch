@@ -352,6 +352,7 @@ func newResourceController(client kubernetes.Interface, eventHandler handlers.Ha
 			newEvent.key, err = cache.MetaNamespaceKeyFunc(obj)
 			newEvent.eventType = "create"
 			newEvent.resourceType = resourceType
+			newEvent.namespace = utils.GetObjectMetaData(obj).Namespace
 			logrus.WithField("pkg", "kubewatch-"+resourceType).Infof("Processing add to %v: %s", resourceType, newEvent.key)
 			if err == nil {
 				queue.Add(newEvent)
@@ -361,6 +362,7 @@ func newResourceController(client kubernetes.Interface, eventHandler handlers.Ha
 			newEvent.key, err = cache.MetaNamespaceKeyFunc(old)
 			newEvent.eventType = "update"
 			newEvent.resourceType = resourceType
+			newEvent.namespace = utils.GetObjectMetaData(new).Namespace
 			logrus.WithField("pkg", "kubewatch-"+resourceType).Infof("Processing update to %v: %s", resourceType, newEvent.key)
 			if err == nil {
 				queue.Add(newEvent)
@@ -388,8 +390,10 @@ func newResourceController(client kubernetes.Interface, eventHandler handlers.Ha
 }
 
 // Run starts the kubewatch controller
+// StopCh channel is used to send interrupt signal to stop it.
 func (c *Controller) Run(stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
+	// make sure the work queue is shutdown which will trigger workers to end
 	defer c.queue.ShutDown()
 
 	c.logger.Info("Starting kubewatch controller")
@@ -397,6 +401,7 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 
 	go c.informer.Run(stopCh)
 
+	// wait for the caches to synchronize before starting the worker
 	if !cache.WaitForCacheSync(stopCh, c.HasSynced) {
 		utilruntime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
 		return
@@ -404,6 +409,8 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 
 	c.logger.Info("Kubewatch controller synced and ready")
 
+	// runWorker will loop until "something bad" happens.  The .Until will
+	// then rekick the worker after one second
 	wait.Until(c.runWorker, time.Second, stopCh)
 }
 
@@ -412,10 +419,10 @@ func (c *Controller) HasSynced() bool {
 	return c.informer.HasSynced()
 }
 
-// LastSyncResourceVersion is required for the cache.Controller interface.
-func (c *Controller) LastSyncResourceVersion() string {
-	return c.informer.LastSyncResourceVersion()
-}
+// // LastSyncResourceVersion is required for the cache.Controller interface.
+// func (c *Controller) LastSyncResourceVersion() string {
+// 	return c.informer.LastSyncResourceVersion()
+// }
 
 func (c *Controller) runWorker() {
 	for c.processNextItem() {
@@ -460,7 +467,6 @@ func (c *Controller) processItem(newEvent Event) error {
 	}
 	// get object's metedata
 	objectMeta := utils.GetObjectMetaData(obj)
-
 	// process events based on its type
 	switch newEvent.eventType {
 	case "create":
@@ -475,8 +481,9 @@ func (c *Controller) processItem(newEvent Event) error {
 		- enahace update event processing in such a way that, it send alerts about what got changed.
 		*/
 		kbEvent := event.Event{
-			Kind: newEvent.resourceType,
-			Name: newEvent.key,
+			Kind:      newEvent.resourceType,
+			Namespace: newEvent.namespace,
+			Name:      newEvent.key,
 		}
 		c.eventHandler.ObjectUpdated(obj, kbEvent)
 		return nil
